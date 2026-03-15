@@ -466,7 +466,7 @@ local function CreateResourceTracker()
 			local arcType = Enum.PowerType.ArcaneCharges or 16
 			local charges = UnitPower("player", arcType)
 			local maxCharges = UnitPowerMax("player", arcType)
-			self.textAux:SetText(charges .. "/" .. maxCharges)
+			self.textAux:SetText(charges)
 			self.textAux:SetTextColor(0.4, 0.6, 1, 1) -- 비전 파란색
 			self.textAux:Show()
 		else
