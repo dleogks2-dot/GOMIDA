@@ -291,6 +291,7 @@ local function Core_Enable()
 	frame:SetScript("OnEvent", frame._coreOnEvent)
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
+	frame:RegisterUnitEvent("UNIT_POWER_UPDATE", "player") -- 비전 충전물 등 보조 자원 갱신
 	frame:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player")
 	frame._lastAbove = nil
 	frame._lastSoundTime = nil
@@ -338,6 +339,7 @@ local function ApplySettings()
 	local defaultFont = NumberFontNormal:GetFont() or "Fonts\\2002B.TTF"
 	frame.textBase:SetFont(defaultFont, db.fontSize, "OUTLINE")
 	frame.textCond:SetFont(defaultFont, db.conditionFontSize, "OUTLINE")
+	frame.textAux:SetFont(defaultFont, db.fontSize, "OUTLINE")
 	frame._baseColor = EnsureColorTable(db.fontColor, defaults.fontColor)
 	frame._condColor = EnsureColorTable(db.conditionColor, defaults.conditionColor)
 	frame._curveCacheKey = nil
@@ -373,6 +375,10 @@ local function CreateResourceTracker()
 	frame.textCond:SetPoint("CENTER")
 	frame.textCond:SetText("0")
 	frame.textCond:SetTextColor(0, 0, 0, 0)
+	frame.textAux = frame:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+	frame.textAux:SetPoint("BOTTOM", frame.textBase, "TOP", 0, 2)
+	frame.textAux:SetText("")
+	frame.textAux:Hide()
 	frame:RegisterForDrag("LeftButton")
 	frame:SetScript("OnDragStart", function(self) if db.unlocked then self:StartMoving() end end)
 	frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing(); SavePositionFromFrame() end)
@@ -391,6 +397,7 @@ local function CreateResourceTracker()
 		local curForSound = nil
 		-- [논리 개입]: 기본 설정값을 가져오되, 특정 특성 ID가 감지되면 강제로 덮어씌운다.
 		local isAbsolute = db.useAbsoluteValue
+		local isArcaneMage = false
 		local specIndex = GetSpecialization and GetSpecialization()
 		if specIndex then
 			local specID = GetSpecializationInfo(specIndex)
@@ -405,6 +412,9 @@ local function CreateResourceTracker()
 			elseif specID == 269 then
 				isAbsolute = true  -- 269: 풍운 수도사 (기 절대값 강제)
 				pType = Enum.PowerType.Chi or 12 -- 풍운은 주 자원(기력) 대신 '기(Chi)'를 추적하도록 강제 변경
+			elseif specID == 62 then
+				isAbsolute = false -- 62: 비전 법사 (마나 퍼센트 강제)
+				isArcaneMage = true
 			end
 		end
 		if isAbsolute then
@@ -450,6 +460,18 @@ local function CreateResourceTracker()
 					end
 				end
 			end
+		end
+		-- 비전 법사: 비전 충전물(Arcane Charges)을 마나 위에 실제값으로 표시
+		if isArcaneMage then
+			local arcType = Enum.PowerType.ArcaneCharges or 16
+			local charges = UnitPower("player", arcType)
+			local maxCharges = UnitPowerMax("player", arcType)
+			self.textAux:SetText(charges .. "/" .. maxCharges)
+			self.textAux:SetTextColor(0.4, 0.6, 1, 1) -- 비전 파란색
+			self.textAux:Show()
+		else
+			self.textAux:SetText("")
+			self.textAux:Hide()
 		end
 		-- 2) 조건부 색/크기(커브)
 		local base = self._baseColor or defaults.fontColor
