@@ -249,8 +249,13 @@ local function CreateResourceTracker()
 		end
 	end)
 	frame._coreOnEvent = function(self, event, unit)
-		-- [FIX 2] PLAYER_ENTERING_WORLD arg1은 boolean → unit 보정
-		if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_SPECIALIZATION_CHANGED" then
+		-- PLAYER_ENTERING_WORLD는 secure context에서 발생 → UnitPower taint 방지를 위해 딜레이
+		if event == "PLAYER_ENTERING_WORLD" then
+			C_Timer.After(0.5, function()
+				if self._coreEnabled then self._coreOnEvent(self, "PLAYER_SPECIALIZATION_CHANGED", "player") end
+			end)
+			return
+		elseif event == "PLAYER_SPECIALIZATION_CHANGED" then
 			unit = "player"
 		end
 		if unit and unit ~= "player" then return end
