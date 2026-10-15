@@ -1,7 +1,7 @@
 // PDF 정리기 오프라인 캐시
 // - 화면(HTML): 인터넷이 되면 항상 최신 버전, 안 되면(또는 3초 넘게 걸리면) 저장해 둔 버전
 // - 나머지 파일: 저장해 둔 것을 먼저 쓰고 뒤에서 갱신
-const C = 'pdfjr-v7';
+const C = 'pdfjr-v8';
 const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
